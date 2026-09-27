@@ -98,7 +98,8 @@ CITIES = {
         'short': 'Los Angeles\nCA',
     },
     'Singapore': {
-        'center': (1.3521, 103.8198),
+        'center': (1.2838, 103.8511),   # Raffles Place -- dense road network; original center
+                                         # (1.3521, 103.8198) had no roads within the polygon
         'radius': 400,
         'demand_base': 2.3,
         'tomtom_2024': 19.0,
