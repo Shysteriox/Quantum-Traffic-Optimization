@@ -28,13 +28,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter1d
 
-sys.path.insert(0, r"c:\Output\QuantumTrafficOptimization")
+sys.path.insert(0, r"C:\QuantumTrafficOptimization")
 from simulate_qubo_traffic import (
     build_grid_adjacency, construct_qubo_matrix,
     solve_qubo_simulated_quantum_annealing, solve_qubo_exact
 )
 
-OUTPUT_DIR = r"c:\Output\QuantumTrafficOptimization"
+OUTPUT_DIR = r"C:\QuantumTrafficOptimization"
 FIG_DIR = os.path.join(OUTPUT_DIR, "figures")
 os.makedirs(FIG_DIR, exist_ok=True)
 
@@ -189,15 +189,11 @@ for ctrl in CONTROLLERS:
     ax1.plot(DEMANDS_A, sm, marker=MARKERS[ctrl], color=COLORS[ctrl],
              lw=2.2, markersize=5, label=ctrl)
     ax1.fill_between(DEMANDS_A, sm-sd, sm+sd, alpha=0.15, color=COLORS[ctrl])
-    lam = critical[ctrl]
-    ax1.axvline(lam, color=COLORS[ctrl], lw=1.2, ls='--', alpha=0.7)
-    ax1.text(lam + 0.03, ax1.get_ylim()[1]*0.05 if ax1.get_ylim()[1] > 0 else 5,
-             f"λ*={lam:.2f}", color=COLORS[ctrl], fontsize=8.5, rotation=90)
+    ax1.axvline(critical[ctrl], color=COLORS[ctrl], lw=1.2, ls='--', alpha=0.7)
 
 ax1.set_xlabel("Traffic Demand Multiplier (λ/λ₀)")
 ax1.set_ylabel("Mean Residual Queue per Intersection\n(last 225 s of simulation)")
 ax1.set_title("Network Congestion Phase Transition\n(4×4 grid, n=15 trials)")
-ax1.legend(fontsize=9.5)
 ax1.grid(True, ls='--', alpha=0.4)
 ax1.set_xlim(DEMANDS_A[0], DEMANDS_A[-1])
 
@@ -205,19 +201,32 @@ ax1.set_xlim(DEMANDS_A[0], DEMANDS_A[-1])
 y_top = ax1.get_ylim()[1]
 ax1.axvspan(DEMANDS_A[0], critical["QA-QUBO"],   alpha=0.05, color='#1b9e77')
 ax1.axvspan(critical["QA-QUBO"], DEMANDS_A[-1], alpha=0.05, color='#d95f02')
-ax1.text(0.55, 0.93, "FREE FLOW", transform=ax1.transAxes,
+ax1.text(0.20, 0.93, "FREE FLOW", transform=ax1.transAxes,
          ha='center', fontsize=9, color='#1b9e77', alpha=0.85)
-ax1.text(0.82, 0.93, "CONGESTED", transform=ax1.transAxes,
+ax1.text(0.93, 0.93, "CONGESTED", transform=ax1.transAxes,
          ha='center', fontsize=9, color='#d95f02', alpha=0.85)
 
-# QUBO advantage: how much higher is λ*_QUBO vs Fixed-Time?
+# Critical-threshold values: one clean stacked legend box (upper-left, clear of all
+# data curves and the phase-transition zone) instead of rotated inline labels that
+# used to collide with the curves and with each other.
+lam_lines = "\n".join(f"λ*({c}) = {critical[c]:.2f}" for c in CONTROLLERS)
+ax1.text(0.02, 0.80, lam_lines, transform=ax1.transAxes, ha='left', va='top',
+         fontsize=8.5, linespacing=1.6,
+         bbox=dict(boxstyle='round,pad=0.4', facecolor='white', edgecolor='gray', alpha=0.9))
+
+# QUBO advantage: how much higher is λ*_QUBO vs Fixed-Time? -- placed low and to the
+# right, well clear of both the λ* box and the curves/legend above it.
 delta_lam = critical["QA-QUBO"] - critical["Fixed-Time"]
 ax1.annotate(
-    f"QUBO raises λ* by +{delta_lam:.2f}×λ₀\nvs Fixed-Time",
-    xy=(critical["QA-QUBO"], 0), xytext=(critical["QA-QUBO"]+0.12, y_top*0.35),
+    f"QUBO raises λ* by +{delta_lam:.2f}×λ₀ vs Fixed-Time",
+    xy=(critical["QA-QUBO"], y_top*0.06),
+    xytext=(0.98, 0.18), textcoords='axes fraction',
+    ha='right', va='bottom',
     arrowprops=dict(arrowstyle="->", color="#1b9e77", lw=1.5),
     fontsize=9, color="#1b9e77"
 )
+
+ax1.legend(fontsize=9, loc='center left', bbox_to_anchor=(0.02, 0.55))
 
 # Right panel: Green-wave synchronization vs demand
 for ctrl in CONTROLLERS:
@@ -244,7 +253,7 @@ print("  Saved fig6_bifurcation.png")
 #   Color = % CO2 improvement of QA-QUBO over Fixed-Time
 # ════════════════════════════════════════════════════════════════════════════
 print("\n" + "=" * 60)
-print("EXPERIMENT B: 2D Phase Diagram  (Grid Size × Demand)")
+print("EXPERIMENT B: 2D Phase Diagram  (Grid Size x Demand)")
 print("=" * 60)
 
 GRID_SIZES = [2, 3, 4, 5, 6]
@@ -259,7 +268,7 @@ pct_improve_qubo_vs_local = np.zeros((len(GRID_SIZES), len(DEMANDS_B)))
 
 for li, L_val in enumerate(GRID_SIZES):
     for di, dm in enumerate(DEMANDS_B):
-        print(f"  L={L_val}, λ={dm:.1f}", flush=True)
+        print(f"  L={L_val}, lambda={dm:.1f}", flush=True)
         vals = {"Fixed-Time": [], "Local-Greedy": [], "QA-QUBO": []}
         for ctrl in ["Fixed-Time", "Local-Greedy", "QA-QUBO"]:
             for trial in range(N_TRIALS_B):
@@ -379,7 +388,7 @@ N_TRIALS_C = 12
 coherence_results = {c: {"mean": [], "std": []} for c in CONTROLLERS}
 
 for di, dm in enumerate(DEMANDS_C):
-    print(f"  Coherence sweep: λ={dm:.2f}", flush=True)
+    print(f"  Coherence sweep: lambda={dm:.2f}", flush=True)
     for ctrl in CONTROLLERS:
         runs = []
         for trial in range(N_TRIALS_C):
@@ -466,7 +475,7 @@ ax.grid(True, ls='--', alpha=0.4)
 ax.set_xlim(DEMANDS_C[0], DEMANDS_C[-1])
 ax.set_ylim(1, 5)
 ax.axhline(4, color='grey', lw=0.8, ls=':', alpha=0.6)
-ax.text(DEMANDS_C[-1]-0.05, 4.05, "Full corridor (4 intersections)", ha='right', fontsize=8, color='grey')
+ax.text(DEMANDS_C[0]+0.05, 4.08, "Full corridor (4 intersections)", ha='left', fontsize=8, color='grey')
 
 # annotate max coherence at peak demand
 for ctrl in CONTROLLERS:
@@ -481,10 +490,10 @@ fig.savefig(os.path.join(FIG_DIR, "fig7_greenwave_coherence.png"), bbox_inches="
 plt.close(fig)
 print("  Saved fig7_greenwave_coherence.png")
 
-print("\n" + "═"*60)
+print("\n" + "="*60)
 print("ALL EXPERIMENTS COMPLETE.")
 print(f"Figures saved to: {FIG_DIR}")
-print("═"*60)
+print("="*60)
 print(f"\n  Critical lam* (phase transition thresholds):")
 for c in CONTROLLERS:
     print(f"    {c:20s}: {critical[c]:.2f} x lam0")

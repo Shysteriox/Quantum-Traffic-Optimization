@@ -522,12 +522,21 @@ if __name__ == '__main__':
 
     fig, ax = plt.subplots(figsize=(7.5, 6))
 
+    # Push labels apart when two points land close together (e.g. Fremont/Oslo
+    # sit almost on top of each other) instead of using one fixed offset for all.
+    x_range = max(real_tt) - min(real_tt) or 1.0
+    y_range = max(model_idx) - min(model_idx) or 1.0
+    placed = []
     for i, city in enumerate(city_names):
-        ax.scatter(real_tt[i], model_idx[i], s=220, color=colors[i],
-                   zorder=5, edgecolors='black', lw=1.2)
-        ax.annotate(CITIES[city]['short'].replace('\n', ', '),
-                    (real_tt[i], model_idx[i]),
-                    xytext=(6, 4), textcoords='offset points', fontsize=9.5)
+        x0, y0 = real_tt[i], model_idx[i]
+        ax.scatter(x0, y0, s=220, color=colors[i], zorder=5, edgecolors='black', lw=1.2)
+        crowd = sum(1 for (px, py) in placed
+                    if abs(px - x0) / x_range < 0.05 and abs(py - y0) / y_range < 0.05)
+        placed.append((x0, y0))
+        dy = 8 if crowd % 2 == 0 else -16
+        va = 'bottom' if crowd % 2 == 0 else 'top'
+        ax.annotate(CITIES[city]['short'].replace('\n', ', '), (x0, y0),
+                    xytext=(9, dy), textcoords='offset points', fontsize=9.5, va=va)
 
     # Best-fit line + R2
     x_arr = np.array(real_tt, dtype=float)
@@ -563,11 +572,13 @@ if __name__ == '__main__':
     # FIGURE 11: PROJECTED HEALTH + ENVIRONMENTAL IMPACT
     # =============================================================================
 
-    fig, axes = plt.subplots(1, 2, figsize=(13, 5.5))
+    fig, axes = plt.subplots(1, 2, figsize=(13, 6.3))
 
     # --- Left: Annual CO2 savings (metric tonnes, extrapolated to full year) ---
+    # Same-year comparison (both at 2030 demand) so the controller's effect isn't
+    # conflated with 2025->2030 traffic growth -- same fix as fig08/fig09.
     ax = axes[0]
-    co2_fixed = [all_results[c][2025]['Fixed-Time']['co2_kg']['mean'] * ANNUAL_SCALE / 1000
+    co2_fixed = [all_results[c][2030]['Fixed-Time']['co2_kg']['mean'] * ANNUAL_SCALE / 1000
                  for c in city_names]
     co2_qubo  = [all_results[c][2030]['QA-QUBO']['co2_kg']['mean']  * ANNUAL_SCALE / 1000
                  for c in city_names]
@@ -576,16 +587,18 @@ if __name__ == '__main__':
 
     bars = ax.bar(short_names, co2_saved, color=colors,
                   edgecolor='black', lw=0.9, alpha=0.88)
-    for bar, pct, fs in zip(bars, pct_saved, co2_saved):
+    for bar, pct in zip(bars, pct_saved):
+        sign = '+' if pct >= 0 else '-'
         ax.text(bar.get_x() + bar.get_width() / 2,
-                bar.get_height() + max(co2_saved) * 0.01,
-                f'{pct:.1f}% reduction', ha='center', va='bottom',
+                bar.get_height() + max(co2_saved) * 0.02,
+                f'{sign}{abs(pct):.1f}% reduction', ha='center', va='bottom',
                 fontsize=8.5, fontweight='bold', color='#1a5276')
 
     ax.set_ylabel('Annual CO2 Saved (metric tonnes, area-scaled)')
     ax.set_title(
         'Annual CO2 Reduction per City\n'
-        '(Fixed-Time 2025 \u2192 QA-QUBO 2030 full deployment, peak-hour simulation scaled to year)')
+        '(QA-QUBO vs Fixed-Time, both at 2030 demand -- isolates controller effect)',
+        fontsize=10.5)
     ax.grid(True, axis='y', ls='--', alpha=0.4)
 
     # --- Right: PM2.5 baseline + traffic-attributable reduction ---
@@ -608,23 +621,24 @@ if __name__ == '__main__':
 
     for i, (base, red) in enumerate(zip(pm25_base, pm25_reduct)):
         ax.text(x_pos[i], base - red - max(pm25_base) * 0.02,
-                f'-{red:.1f}', ha='center', va='top', fontsize=8, color='white',
+                f'{red:+.1f}', ha='center', va='top', fontsize=8, color='white',
                 fontweight='bold')
 
     ax.set_xticks(x_pos)
     ax.set_xticklabels(short_names, fontsize=9)
     ax.set_ylabel('Annual Average PM2.5 (\u03bcg/m\u00b3)')
     ax.set_title(
-        'Air Quality Impact: PM2.5 Baseline vs Traffic-Related Reduction\n'
-        '(Traffic \u224840% of urban PM2.5; projection with 100% QA-QUBO deployment)')
+        'Air Quality: PM2.5 Baseline vs Traffic-Related Reduction\n'
+        '(traffic \u224840% of urban PM2.5; QA-QUBO vs Fixed-Time at 2030 demand)',
+        fontsize=10.5)
     ax.legend(fontsize=8.5, loc='upper right')
     ax.grid(True, axis='y', ls='--', alpha=0.4)
 
     fig.suptitle(
         'Projected Environmental & Public Health Impact of QA-QUBO Traffic Optimization\n'
-        '(5 global cities, real OSM road networks, 2025 baseline \u2192 2030 full deployment)',
-        fontsize=11, y=1.02)
-    fig.tight_layout()
+        '(5 global cities, real OSM road networks, same-year comparison at full 2030 deployment)',
+        fontsize=11, y=1.03)
+    fig.subplots_adjust(wspace=0.32, top=0.80)
     fig.savefig(os.path.join(FIG_DIR, 'fig11_health_impact.png'), bbox_inches='tight')
     plt.close(fig)
     print("  Saved fig11_health_impact.png")

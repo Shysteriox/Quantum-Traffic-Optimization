@@ -4,3 +4,5 @@ cache/
 osm_cache_sized/
 *.mp4
 *.gif
+*.log
+_nonascii_report.txt

@@ -387,7 +387,7 @@ def main():
             })
 
     # Figure 1: Time-Series Queue Evolution during 30-Minute Rush Hour Peak
-    fig, ax = plt.subplots(figsize=(7.5, 4.5))
+    fig, ax = plt.subplots(figsize=(9.0, 4.8))
     time_mins = np.arange(1, 121) * 15.0 / 60.0
     colors = {"Fixed-Time": "#d95f02", "Local-Greedy": "#7570b3", "QA-QUBO": "#1b9e77"}
     labels = {
@@ -404,11 +404,11 @@ def main():
 
     ax.set_xlabel("Simulation Time (minutes)")
     ax.set_ylabel("Mean Idling Vehicles per Intersection")
-    ax.set_title("Urban 4×4 Grid: Real-Time Idling Queue Length During Rush Hour (n = 20 trials)")
+    ax.set_title("Urban 4×4 Grid: Real-Time Idling Queue Length During Rush Hour\n(n = 20 trials)", fontsize=12.5)
     ax.grid(True, linestyle="--", alpha=0.4)
     ax.legend(frameon=True, loc="upper left")
     fig.tight_layout()
-    fig.savefig(os.path.join(FIG_DIR, "fig1_queue_timeseries.png"))
+    fig.savefig(os.path.join(FIG_DIR, "fig1_queue_timeseries.png"), bbox_inches="tight")
     plt.close(fig)
 
     # Figure 2: Bar Chart Comparison of Key Environmental & Delay Metrics
@@ -429,17 +429,18 @@ def main():
         ax.set_ylabel(ylabel)
         ax.set_title(title)
         ax.grid(True, axis="y", linestyle="--", alpha=0.4)
-        for bar, mean_val in zip(bars, means):
+        ax.set_ylim(0, (max(means) + max(stds)) * 1.28)
+        label_pad = ax.get_ylim()[1] * 0.03
+        for bar, mean_val, std_val in zip(bars, means, stds):
             ax.text(
                 bar.get_x() + bar.get_width() / 2.0,
-                bar.get_height() + max(stds) * 0.35,
+                bar.get_height() + std_val + label_pad,
                 f"{mean_val:.1f}",
                 ha="center",
                 va="bottom",
                 fontsize=9.5,
                 fontweight="bold",
             )
-        ax.set_ylim(0, max(means) * 1.22)
 
     fig.tight_layout()
     fig.savefig(os.path.join(FIG_DIR, "fig2_emissions_comparison.png"))
