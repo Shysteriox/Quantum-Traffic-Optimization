@@ -96,9 +96,9 @@ fig.suptitle(
     '% = SQA-QUBO vs Fixed-Time reduction)',
     fontsize=11, y=1.02)
 fig.tight_layout()
-fig.savefig(os.path.join(FIG_DIR, 'fig08_city_comparison_corrected.png'), bbox_inches='tight')
+fig.savefig(os.path.join(FIG_DIR, 'fig08_city_comparison.png'), bbox_inches='tight')
 plt.close(fig)
-print("Saved fig08_city_comparison_corrected.png")
+print("Saved fig08_city_comparison.png (canonical -- supersedes real_city_sim.py's uncorrected version)")
 
 
 # =============================================================================
@@ -132,14 +132,15 @@ for ax_i, (metric, mlabel) in enumerate(metric_pairs):
 
     ax.axvspan(2026.5, 2030.5, alpha=0.07, color='green')
     ax.axvline(2026.5, color='green', lw=1.2, ls=':', alpha=0.85)
-    ax.text(2026.7, ax.get_ylim()[0] * 0.98 if ax.get_ylim()[0] > 0 else 5,
-            'SQA-QUBO\ndeployment\nbegins', fontsize=7.5, color='darkgreen')
+    ax.text(2028.5, ax.get_ylim()[1] * 0.90, 'SQA-QUBO\ndeployment begins',
+            fontsize=7.5, color='darkgreen', va='top', ha='center',
+            bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='darkgreen', alpha=0.85))
 
     ax.set_xlabel('Year')
     ax.set_ylabel('% of 2025 Fixed-Time Baseline')
     ax.set_title(mlabel)
     ax.set_xticks(YEARS)
-    ax.legend(fontsize=8.5, title='City (solid=SQA-QUBO, dashed=Fixed-Time)')
+    ax.legend(fontsize=8.5, title='City (solid=SQA-QUBO, dashed=Fixed-Time)', loc='upper left')
     ax.grid(True, ls='--', alpha=0.35)
 
     # Limitations note
@@ -154,9 +155,9 @@ fig.suptitle(
     'Solid = SQA-QUBO with gradual deployment from 2027)',
     fontsize=11, y=1.02)
 fig.tight_layout()
-fig.savefig(os.path.join(FIG_DIR, 'fig09_yearly_trend_corrected.png'), bbox_inches='tight')
+fig.savefig(os.path.join(FIG_DIR, 'fig09_yearly_trend.png'), bbox_inches='tight')
 plt.close(fig)
-print("Saved fig09_yearly_trend_corrected.png")
+print("Saved fig09_yearly_trend.png (canonical -- supersedes real_city_sim.py's uncorrected version)")
 
 
 # =============================================================================

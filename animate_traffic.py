@@ -26,13 +26,13 @@ import matplotlib.patheffects as pe
 from matplotlib.collections import LineCollection
 from matplotlib.gridspec import GridSpec
 
-sys.path.insert(0, r"c:\Output\QuantumTrafficOptimization")
+sys.path.insert(0, r"C:\QuantumTrafficOptimization")
 from simulate_qubo_traffic import (
     build_grid_adjacency, construct_qubo_matrix,
     solve_qubo_simulated_quantum_annealing
 )
 
-OUTPUT_DIR = r"c:\Output\QuantumTrafficOptimization"
+OUTPUT_DIR = r"C:\QuantumTrafficOptimization"
 FIG_DIR = os.path.join(OUTPUT_DIR, "figures")
 os.makedirs(FIG_DIR, exist_ok=True)
 

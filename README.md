@@ -47,29 +47,32 @@ osm_cache/               Cached real road networks (tracked in git -- small, avo
 city_results.json, world_results.json, network_scale_results.json, simulation_results.json
                          Raw numeric results
 DATA_SOURCES.md          Sourcing + confidence for every real-world statistic used
-AGENT_PROMPT.md          Self-contained prompt used to independently reproduce this with a
-                          different agent, for cross-checking results
+NETWORK_PROVENANCE.md    Which cities' figures use a real OSM road network vs. a synthetic
+                          fallback grid, and why
+REFERENCES.md            16 independently-verified real citations for the paper
 ```
 
 ## Running it
 
 ```
 pip install -r requirements.txt
-python real_city_sim.py       # original 5-city run
+python real_city_sim.py       # original 5-city run (writes uncorrected fig08/fig09 + fig10/fig11)
+python fix_figures.py         # MUST run after real_city_sim.py -- overwrites fig08/fig09 with the
+                               # same-year-comparison corrected versions (see "Important framing note")
 python world_city_sim.py      # 14-city world run (imports real_city_sim, no need to run it first)
 python network_scale_test.py  # network-size scaling test
+python phase_transition.py    # gridlock phase-transition experiments (synthetic grids)
 ```
 
 Needs internet access for the first run per city (OpenStreetMap via the
 Overpass API); results are cached to `osm_cache/` afterward. If Overpass is
 unreachable, cities fall back to a synthetic 5x5 grid automatically (this is
-logged clearly in the console output and in the results JSON as
-`synthetic_fallback`).
+logged clearly in the console output) -- check `NETWORK_PROVENANCE.md` for
+which cities that affected on the last run.
 
 ## References
 
-See the in-progress paper draft for the verified reference list (real
-peer-reviewed papers on quantum annealing for traffic signals, max-pressure
-control, and traffic phase transitions) -- do not reuse the original draft's
-bibliography, it contained fabricated citations that have since been caught
-and removed.
+`REFERENCES.md` has 16 independently-verified real citations (each checked
+against the actual source, not just a citation string that looks right) --
+do not reuse the original draft's bibliography, it contained fabricated
+citations that have since been caught and removed.

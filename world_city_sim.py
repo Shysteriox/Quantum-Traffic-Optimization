@@ -269,7 +269,9 @@ def main():
     # Scatter: real PM2.5 (x) vs % CO2 change 2025-Fixed -> 2030-controller (y),
     # one series per controller, both Greedy and QUBO shown honestly.
     # =========================================================================
-    fig, ax = plt.subplots(figsize=(8.5, 6.5))
+    import matplotlib.patches as mpatches
+    fig, ax = plt.subplots(figsize=(10.5, 7))
+    legend_handles = []
     for city in ALL_CITIES:
         pm = ALL_CITIES[city]['pm25_2023']
         col = ALL_CITIES[city]['color']
@@ -281,20 +283,28 @@ def main():
         ax.scatter(pm, pct_qa, s=170, color=col, edgecolors='black', lw=1.1,
                    marker='o', zorder=5)
         ax.scatter(pm, pct_gr, s=170, color=col, edgecolors='black', lw=1.1,
-                   marker='^', zorder=5, alpha=0.6)
-        ax.annotate(ALL_CITIES[city]['short'].replace('\n', ', '), (pm, pct_qa),
-                    xytext=(6, 4), textcoords='offset points', fontsize=7.5)
+                   marker='^', zorder=5, alpha=0.55)
+        legend_handles.append(mpatches.Patch(color=col, label=ALL_CITIES[city]['short'].replace('\n', ', ')))
 
     ax.axhline(0, color='gray', lw=1, ls='-')
-    ax.scatter([], [], s=170, color='gray', edgecolors='black', marker='o', label='QA-QUBO')
-    ax.scatter([], [], s=170, color='gray', edgecolors='black', marker='^', alpha=0.6, label='Local-Greedy')
+    marker_legend = [
+        plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='gray',
+                   markeredgecolor='black', markersize=11, label='QA-QUBO'),
+        plt.Line2D([0], [0], marker='^', color='w', markerfacecolor='gray',
+                   markeredgecolor='black', markersize=11, alpha=0.55, label='Local-Greedy'),
+    ]
+    leg1 = ax.legend(handles=marker_legend, loc='lower right', fontsize=9.5,
+                      title='Controller', framealpha=0.95)
+    ax.add_artist(leg1)
+    ax.legend(handles=legend_handles, loc='center left', bbox_to_anchor=(1.01, 0.5),
+              fontsize=8, title='City', framealpha=0.95)
+
     ax.set_xlabel('Real 2023 PM2.5 baseline (μg/m³) -- proxy for how congested/polluted the city already is')
     ax.set_ylabel('% CO2 change, 2025 Fixed-Time → 2030 full deployment\n(demand growth included; positive = improvement)')
     ax.set_title(
-        'Does controller benefit scale with baseline pollution?\n'
+        f'Does controller benefit scale with baseline pollution? ({len(ALL_CITIES)} cities)\n'
         '(Includes 2%/yr demand growth 2025-2030 -- a city can show a net INCREASE\n'
         'if traffic growth outpaces the controller\'s efficiency gain)', fontsize=10.5)
-    ax.legend(fontsize=9)
     ax.grid(True, ls='--', alpha=0.4)
     fig.tight_layout()
     fig.savefig(os.path.join(FIG_DIR, 'fig13_pollution_vs_benefit.png'), bbox_inches='tight')

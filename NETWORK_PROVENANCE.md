@@ -18,7 +18,7 @@ synthetic 5x5 grid (25 nodes), exactly as the original task spec allowed.
 | Oslo, Norway | **real OSM** | 70 | cached before outage |
 | Mexico City, Mexico | **real OSM** | 65 | downloaded successfully before outage began |
 | Zurich, Switzerland | **real OSM** | 70 | downloaded successfully before outage began |
-| Singapore | synthetic | 25 | different failure mode: "no graph nodes within requested polygon" at that exact center point/radius -- an unrelated, fixable issue (the coordinate likely lands over water/park), not the Overpass outage |
+| Singapore | **real OSM** | 53 | fixed -- old center point (1.3521, 103.8198) had no roads in the search polygon; moved to Raffles Place (1.2838, 103.8511), a dense real intersection cluster |
 | Beijing, China | synthetic | 25 | Overpass outage |
 | Jakarta, Indonesia | synthetic | 25 | Overpass outage |
 | London, UK | synthetic | 25 | Overpass outage |
@@ -27,7 +27,7 @@ synthetic 5x5 grid (25 nodes), exactly as the original task spec allowed.
 | Sao Paulo, Brazil | synthetic | 25 | Overpass outage |
 | Sydney, Australia | synthetic | 25 | Overpass outage |
 
-**6 of 14 cities are on real road networks; 8 are on the synthetic fallback.**
+**7 of 14 cities are on real road networks; 7 are on the synthetic fallback** (Singapore's center point has since been fixed and re-downloaded successfully -- see row above).
 This is reported here rather than left implicit because every figure and
 number derived from a synthetic-grid city is a statement about "a generic
 5x5 grid with this city's real pollution stats and demand assumption
