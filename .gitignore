@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+cache/
+osm_cache_sized/
+*.mp4
+*.gif
