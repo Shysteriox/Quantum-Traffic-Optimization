@@ -116,9 +116,9 @@ def main():
     ax_mat.set_title("(b) Upper-Triangular 16×16 QUBO Matrix $Q$")
 
     fig.tight_layout()
-    fig.savefig(os.path.join(FIG_DIR, "fig4_qubo_architecture.png"), bbox_inches="tight")
+    fig.savefig(os.path.join(FIG_DIR, "fig04_qubo_architecture.png"), bbox_inches="tight")
     plt.close(fig)
-    print("Saved fig4_qubo_architecture.png successfully.")
+    print("Saved fig04_qubo_architecture.png successfully.")
 
 
 if __name__ == "__main__":

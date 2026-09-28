@@ -1,13 +1,13 @@
-# Verified real references for the paper rewrite
+# Verified references for the paper rewrite
 
-Every entry below was independently confirmed against the actual source
-(CrossRef metadata, Semantic Scholar, arXiv, or TRID — not just a citation
-string that "looks right"). This is the exact failure mode that got the
-original draft's bibliography flagged: two of its five references had
-correct-looking DOI/arXiv links that resolved to a completely different
-paper than what was claimed. Do not add anything to this list without
-opening the link yourself and checking title/authors/venue/year/subject all
-actually match.
+Every entry below was independently confirmed against its actual source
+(CrossRef metadata, Semantic Scholar, arXiv, or TRID), not accepted on the
+strength of a citation string that reads correctly. Verification matters
+here specifically: on checking, some references in an earlier draft's
+bibliography turned out to have correct-looking DOI/arXiv links that
+resolved to a different paper than the one cited. Any addition to this
+list should be checked the same way, by opening the link and confirming
+title, authors, venue, year, and subject all match.
 
 ## Core quantum-annealing-for-traffic papers
 
