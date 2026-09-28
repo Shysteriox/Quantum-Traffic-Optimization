@@ -177,7 +177,41 @@ def _highway_tag(data):
     return h[0] if isinstance(h, list) else h
 
 
-def osm_to_qubo_structure(G, city_name, max_nodes=70):
+def _select_connected_core(G, max_nodes):
+    """
+    Select up to max_nodes nodes that induce a CONNECTED subgraph, favoring
+    higher-degree (busier) intersections where connectivity allows.
+
+    The previous approach picked the global top-N nodes by degree
+    independently, with no check that they were connected to each other --
+    a high-degree node whose real neighbors didn't make the cut ended up
+    with zero edges in the reduced graph, rendering as an isolated dot with
+    no road connecting it to anything (visible in city_tour_videos.py's
+    output, e.g. Tokyo). Growing outward from the single highest-degree node
+    instead guarantees every selected node is reachable from every other.
+    """
+    if G.number_of_nodes() == 0:
+        return set()
+    components = list(nx.connected_components(G))
+    largest = max(components, key=len)
+    sub = G.subgraph(largest)
+    if len(largest) <= max_nodes:
+        return set(largest)
+
+    start = max(largest, key=lambda n: sub.degree(n))
+    selected = {start}
+    frontier = set(sub.neighbors(start))
+    while len(selected) < max_nodes and frontier:
+        best = max(frontier, key=lambda n: sub.degree(n))
+        frontier.discard(best)
+        selected.add(best)
+        for nb in sub.neighbors(best):
+            if nb not in selected:
+                frontier.add(nb)
+    return selected
+
+
+def osm_to_qubo_structure(G, city_name, max_nodes=100000):
     """
     Convert OSM graph to QUBO adjacency (edges, neighbors).
     Classifies each road link as NS or EW by its compass bearing.
@@ -201,12 +235,9 @@ def osm_to_qubo_structure(G, city_name, max_nodes=70):
     ).copy()
     n_excluded = G.number_of_edges() - G_signal.number_of_edges()
 
-    # Keep highest-degree nodes (busiest intersections), ranked on the
-    # freeway-filtered graph
-    nodes = [n for n in G_signal.nodes() if G_signal.degree(n) >= 2]
-    if len(nodes) > max_nodes:
-        by_deg = sorted(nodes, key=lambda n: G_signal.degree(n), reverse=True)
-        nodes = by_deg[:max_nodes]
+    # Select a connected core of intersections (see _select_connected_core),
+    # not just the top-N by degree independently of whether they connect.
+    nodes = list(_select_connected_core(G_signal, max_nodes))
     if len(nodes) < 6:
         L = 4
         edges, neighbors = build_grid_adjacency(L)

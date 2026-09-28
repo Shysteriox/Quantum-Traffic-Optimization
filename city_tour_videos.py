@@ -41,7 +41,7 @@ from simulate_qubo_traffic import (
     solve_qubo_simulated_quantum_annealing,
 )
 from world_city_sim import ALL_CITIES
-from real_city_sim import NON_SIGNAL_HIGHWAY_CLASSES, _highway_tag
+from real_city_sim import NON_SIGNAL_HIGHWAY_CLASSES, _highway_tag, _select_connected_core
 
 OUTPUT_DIR = r"C:\QuantumTrafficOptimization"
 FIG_DIR = os.path.join(OUTPUT_DIR, "figures")
@@ -52,7 +52,7 @@ os.makedirs(VIDEO_DIR, exist_ok=True)
 YEARS = [2025, 2026, 2027, 2028, 2029, 2030]
 QUBO_ADOPTION = {2025: 0.0, 2026: 0.0, 2027: 0.20, 2028: 0.50, 2029: 0.80, 2030: 1.00}
 POP_GROWTH = 0.02
-MAX_NODES = 60
+MAX_NODES = 100000   # effectively uncapped -- use every real connected intersection
 
 T_YEAR = 10          # simulation steps per year
 SUBFRAMES = 5        # interpolated render frames per simulation step (smoothness)
@@ -101,9 +101,10 @@ def get_city_network(city_name):
             [(u, v, k) for u, v, k, data in G.edges(keys=True, data=True)
              if _highway_tag(data) not in NON_SIGNAL_HIGHWAY_CLASSES]
         ).copy()
-        nodes = [n for n in G_signal.nodes() if G_signal.degree(n) >= 2]
-        if len(nodes) > MAX_NODES:
-            nodes = sorted(nodes, key=lambda n: G_signal.degree(n), reverse=True)[:MAX_NODES]
+        # Connected-core selection (not independent top-N by degree, which can
+        # strand a high-degree node whose real neighbors didn't make the cut,
+        # rendering as a disconnected dot with no road linking it to anything).
+        nodes = list(_select_connected_core(G_signal, MAX_NODES))
         if len(nodes) >= 6:
             idx = {n: i for i, n in enumerate(nodes)}
             N = len(nodes)
