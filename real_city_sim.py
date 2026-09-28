@@ -59,7 +59,7 @@ os.makedirs(CACHE_DIR, exist_ok=True)
 plt.rcParams.update({
     'font.family': 'serif', 'font.size': 10,
     'axes.labelsize': 11, 'axes.titlesize': 12,
-    'figure.dpi': 200, 'savefig.dpi': 200,
+    'figure.dpi': 300, 'savefig.dpi': 300,
 })
 
 # =============================================================================
