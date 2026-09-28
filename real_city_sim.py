@@ -587,10 +587,12 @@ if __name__ == '__main__':
 
     bars = ax.bar(short_names, co2_saved, color=colors,
                   edgecolor='black', lw=0.9, alpha=0.88)
+    ax.set_ylim(0, max(co2_saved) * 1.22)
+    label_pad = ax.get_ylim()[1] * 0.02
     for bar, pct in zip(bars, pct_saved):
         sign = '+' if pct >= 0 else '-'
         ax.text(bar.get_x() + bar.get_width() / 2,
-                bar.get_height() + max(co2_saved) * 0.02,
+                bar.get_height() + label_pad,
                 f'{sign}{abs(pct):.1f}% reduction', ha='center', va='bottom',
                 fontsize=8.5, fontweight='bold', color='#1a5276')
 
@@ -611,13 +613,21 @@ if __name__ == '__main__':
                     for pm, pct in zip(pm25_base, pct_saved)]
 
     x_pos = np.arange(len(city_names))
-    ax.bar(x_pos, pm25_base, color=colors, edgecolor='black', lw=0.8, alpha=0.38,
-           label='Current PM2.5 (IQAir 2023)')
+    ax.bar(x_pos, pm25_base, color=colors, edgecolor='black', lw=0.8, alpha=0.38)
     ax.bar(x_pos, [-r for r in pm25_reduct], bottom=pm25_base, color=colors,
-           edgecolor='black', lw=0.8, alpha=0.92,
-           label='Traffic reduction with QA-QUBO')
+           edgecolor='black', lw=0.8, alpha=0.92)
     ax.axhline(WHO_LIMIT, color='red', lw=2.0, ls='--',
                label=f'WHO guideline ({WHO_LIMIT} \u03bcg/m\u00b3)')
+
+    # Bar color = city (see x-axis labels), not the legend category -- passing a
+    # per-city color list into ax.bar() with a label= made the legend swatch grab
+    # one arbitrary city's color, implying a meaning that wasn't there. Use
+    # neutral gray proxies that represent the actual distinction: pale vs solid.
+    legend_proxies = [
+        mpatches.Patch(facecolor='gray', edgecolor='black', alpha=0.38, label='Current PM2.5 (IQAir 2023)'),
+        mpatches.Patch(facecolor='gray', edgecolor='black', alpha=0.92, label='Traffic reduction with QA-QUBO'),
+        plt.Line2D([0], [0], color='red', lw=2.0, ls='--', label=f'WHO guideline ({WHO_LIMIT} \u03bcg/m\u00b3)'),
+    ]
 
     for i, (base, red) in enumerate(zip(pm25_base, pm25_reduct)):
         ax.text(x_pos[i], base - red - max(pm25_base) * 0.02,
@@ -631,7 +641,7 @@ if __name__ == '__main__':
         'Air Quality: PM2.5 Baseline vs Traffic-Related Reduction\n'
         '(traffic \u224840% of urban PM2.5; QA-QUBO vs Fixed-Time at 2030 demand)',
         fontsize=10.5)
-    ax.legend(fontsize=8.5, loc='upper right')
+    ax.legend(handles=legend_proxies, fontsize=8.5, loc='upper right')
     ax.grid(True, axis='y', ls='--', alpha=0.4)
 
     fig.suptitle(
