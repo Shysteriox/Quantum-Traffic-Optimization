@@ -512,7 +512,7 @@ if __name__ == '__main__':
         ax.axvspan(2026.5, 2030.5, alpha=0.07, color='green')
         ax.axvline(2026.5, color='green', lw=1.2, ls=':', alpha=0.9)
         ax.text(2026.7, 102, 'QA-QUBO\ndeployment\nbegins', fontsize=7.5,
-                color='darkgreen', va='top')
+                color='black', va='top')
 
         ax.set_xlabel('Year')
         ax.set_ylabel('% of 2025 Baseline')
@@ -606,14 +606,24 @@ if __name__ == '__main__':
     # Same-year comparison (both at 2030 demand) so the controller's effect isn't
     # conflated with 2025->2030 traffic growth -- same fix as fig08/fig09.
     ax = axes[0]
-    co2_fixed = [all_results[c][2030]['Fixed-Time']['co2_kg']['mean'] * ANNUAL_SCALE / 1000
-                 for c in city_names]
-    co2_qubo  = [all_results[c][2030]['QA-QUBO']['co2_kg']['mean']  * ANNUAL_SCALE / 1000
-                 for c in city_names]
-    co2_saved = [f - q for f, q in zip(co2_fixed, co2_qubo)]
+    co2_fixed_raw = {c: all_results[c][2030]['Fixed-Time']['co2_kg']['mean'] * ANNUAL_SCALE / 1000
+                      for c in city_names}
+    co2_qubo_raw  = {c: all_results[c][2030]['QA-QUBO']['co2_kg']['mean']  * ANNUAL_SCALE / 1000
+                      for c in city_names}
+    co2_saved_raw = {c: co2_fixed_raw[c] - co2_qubo_raw[c] for c in city_names}
+
+    # Sorted by CO2 saved, largest first, so the bars form one clean descending
+    # shape instead of going up and down in whatever order CITIES happens to list.
+    fig11_order = sorted(city_names, key=lambda c: co2_saved_raw[c], reverse=True)
+    fig11_short  = [CITIES[c]['short'] for c in fig11_order]
+    fig11_colors = [CITIES[c]['color'] for c in fig11_order]
+
+    co2_fixed = [co2_fixed_raw[c] for c in fig11_order]
+    co2_qubo  = [co2_qubo_raw[c] for c in fig11_order]
+    co2_saved = [co2_saved_raw[c] for c in fig11_order]
     pct_saved = [100 * (f - q) / max(f, 1e-9) for f, q in zip(co2_fixed, co2_qubo)]
 
-    bars = ax.bar(short_names, co2_saved, color=colors,
+    bars = ax.bar(fig11_short, co2_saved, color=fig11_colors,
                   edgecolor='black', lw=0.9, alpha=0.88)
     ax.set_ylim(0, max(co2_saved) * 1.22)
     label_pad = ax.get_ylim()[1] * 0.02
@@ -622,7 +632,7 @@ if __name__ == '__main__':
         ax.text(bar.get_x() + bar.get_width() / 2,
                 bar.get_height() + label_pad,
                 f'{sign}{abs(pct):.1f}% reduction', ha='center', va='bottom',
-                fontsize=8.5, fontweight='bold', color='#1a5276')
+                fontsize=8.5, fontweight='bold', color='black')
 
     ax.set_ylabel('Annual CO2 Saved (metric tonnes, area-scaled)')
     ax.set_title(
@@ -634,18 +644,20 @@ if __name__ == '__main__':
     # --- Right: PM2.5 baseline + traffic-attributable reduction ---
     ax = axes[1]
     WHO_LIMIT  = 5.0   # WHO annual PM2.5 guideline (ug/m3)
-    pm25_base  = [CITIES[c]['pm25_2023'] for c in city_names]
+    # Same city order as the left panel, for consistency across the figure
+    pm25_base  = [CITIES[c]['pm25_2023'] for c in fig11_order]
     # Traffic contributes ~35-45% of urban PM2.5; CO2 reduction proportional
     TRAFFIC_FRAC = 0.40
     pm25_reduct  = [pm * (pct / 100) * TRAFFIC_FRAC
                     for pm, pct in zip(pm25_base, pct_saved)]
 
-    x_pos = np.arange(len(city_names))
-    ax.bar(x_pos, pm25_base, color=colors, edgecolor='black', lw=0.8, alpha=0.38)
-    ax.bar(x_pos, [-r for r in pm25_reduct], bottom=pm25_base, color=colors,
+    x_pos = np.arange(len(fig11_order))
+    ax.bar(x_pos, pm25_base, color=fig11_colors, edgecolor='black', lw=0.8, alpha=0.38)
+    ax.bar(x_pos, [-r for r in pm25_reduct], bottom=pm25_base, color=fig11_colors,
            edgecolor='black', lw=0.8, alpha=0.92)
     ax.axhline(WHO_LIMIT, color='red', lw=2.0, ls='--',
                label=f'WHO guideline ({WHO_LIMIT} \u03bcg/m\u00b3)')
+    ax.set_ylim(0, max(pm25_base) * 1.22)
 
     # Bar color = city (see x-axis labels), not the legend category -- passing a
     # per-city color list into ax.bar() with a label= made the legend swatch grab
@@ -663,7 +675,7 @@ if __name__ == '__main__':
                 fontweight='bold')
 
     ax.set_xticks(x_pos)
-    ax.set_xticklabels(short_names, fontsize=9)
+    ax.set_xticklabels(fig11_short, fontsize=9)
     ax.set_ylabel('Annual Average PM2.5 (\u03bcg/m\u00b3)')
     ax.set_title(
         'Air Quality: PM2.5 Baseline vs Traffic-Related Reduction\n'

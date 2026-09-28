@@ -24,6 +24,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 from real_city_sim import (
     CITIES as ORIGINAL_CITIES,
@@ -239,16 +240,28 @@ def main():
     gr_vals = [all_results[c][2030]['Local-Greedy']['co2_kg']['mean'] for c in ordered]
     qa_vals = [all_results[c][2030]['QA-QUBO']['co2_kg']['mean'] for c in ordered]
 
-    ax.bar(x - width, ft_vals, width, label='Fixed-Time', color='#7f8c8d', edgecolor='black', lw=0.6)
-    ax.bar(x,          gr_vals, width, label='Local-Greedy', color=colors, alpha=0.55, edgecolor='black', lw=0.6)
-    ax.bar(x + width,  qa_vals, width, label='QA-QUBO', color=colors, alpha=0.95, edgecolor='black', lw=0.6)
+    ax.bar(x - width, ft_vals, width, color='#7f8c8d', edgecolor='black', lw=0.6)
+    ax.bar(x,          gr_vals, width, color=colors, alpha=0.55, edgecolor='black', lw=0.6)
+    ax.bar(x + width,  qa_vals, width, color=colors, alpha=0.95, edgecolor='black', lw=0.6)
 
+    # Bar color = city (see x-axis labels); passing a per-city color list into ax.bar()
+    # with label= made the legend grab one arbitrary city's color for "Local-Greedy"/
+    # "QA-QUBO". Neutral gray proxies at the same alphas as the real bars instead.
+    legend_handles = [
+        mpatches.Patch(facecolor='#7f8c8d', edgecolor='black', label='Fixed-Time'),
+        mpatches.Patch(facecolor='gray', edgecolor='black', alpha=0.55, label='Local-Greedy'),
+        mpatches.Patch(facecolor='gray', edgecolor='black', alpha=0.95, label='QA-QUBO'),
+    ]
+
+    y_row = -max(ft_vals) * 0.06
+    ax.text(-0.9, y_row, 'PM2.5 (2023,\nµg/m³):', ha='right', va='top', fontsize=7.5,
+            color='black', linespacing=1.3)
     for i, c in enumerate(ordered):
         pm = ALL_CITIES[c]['pm25_2023']
         conf = ALL_CITIES[c]['source_confidence']
         mark = '' if conf == 'verified' else '*'
-        ax.text(x[i], -max(ft_vals) * 0.06, f'{pm:.1f}{mark}', ha='center', va='top',
-                fontsize=8, color='#c0392b' if pm > 30 else '#27ae60', fontweight='bold')
+        ax.text(x[i], y_row, f'{pm:.1f}{mark}', ha='center', va='top',
+                fontsize=8, color='black', fontweight='bold')
 
     ax.set_xticks(x)
     ax.set_xticklabels(short, fontsize=8)
@@ -257,7 +270,7 @@ def main():
         '10-City World Comparison, 2030 (100% deployment): Fixed-Time vs Local-Greedy vs QA-QUBO\n'
         'Cities sorted left-to-right by real 2023 PM2.5 (annotated below bars, μg/m³; '
         '* = approximate/secondary-source figure, see DATA_SOURCES.md)', fontsize=10.5)
-    ax.legend(fontsize=9)
+    ax.legend(handles=legend_handles, fontsize=9)
     ax.grid(True, axis='y', ls='--', alpha=0.35)
     fig.tight_layout()
     fig.savefig(os.path.join(FIG_DIR, 'fig12_world_ranking.png'), bbox_inches='tight')
@@ -266,46 +279,47 @@ def main():
 
     # =========================================================================
     # FIG 13: DOES THE BENEFIT SCALE WITH BASELINE POLLUTION?
-    # Scatter: real PM2.5 (x) vs % CO2 change 2025-Fixed -> 2030-controller (y),
-    # one series per controller, both Greedy and QUBO shown honestly.
+    # Redesigned as a bar chart (city names directly on the x-axis, same order
+    # as fig12) instead of a scatter plot -- the scatter needed a 14-color city
+    # legend AND a 2-shape controller legend cross-referenced simultaneously
+    # just to read one point, which was genuinely too much to decode.
     # =========================================================================
-    import matplotlib.patches as mpatches
-    fig, ax = plt.subplots(figsize=(10.5, 7))
-    legend_handles = []
-    for city in ALL_CITIES:
-        pm = ALL_CITIES[city]['pm25_2023']
-        col = ALL_CITIES[city]['color']
-        ft25 = all_results[city][2025]['Fixed-Time']['co2_kg']['mean']
-        gr30 = all_results[city][2030]['Local-Greedy']['co2_kg']['mean']
-        qa30 = all_results[city][2030]['QA-QUBO']['co2_kg']['mean']
-        pct_gr = 100 * (ft25 - gr30) / ft25
-        pct_qa = 100 * (ft25 - qa30) / ft25
-        ax.scatter(pm, pct_qa, s=170, color=col, edgecolors='black', lw=1.1,
-                   marker='o', zorder=5)
-        ax.scatter(pm, pct_gr, s=170, color=col, edgecolors='black', lw=1.1,
-                   marker='^', zorder=5, alpha=0.55)
-        legend_handles.append(mpatches.Patch(color=col, label=ALL_CITIES[city]['short'].replace('\n', ', ')))
+    pct_qa_vals, pct_gr_vals = [], []
+    for c in ordered:
+        ft25 = all_results[c][2025]['Fixed-Time']['co2_kg']['mean']
+        gr30 = all_results[c][2030]['Local-Greedy']['co2_kg']['mean']
+        qa30 = all_results[c][2030]['QA-QUBO']['co2_kg']['mean']
+        pct_gr_vals.append(100 * (ft25 - gr30) / ft25)
+        pct_qa_vals.append(100 * (ft25 - qa30) / ft25)
 
-    ax.axhline(0, color='gray', lw=1, ls='-')
-    marker_legend = [
-        plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='gray',
-                   markeredgecolor='black', markersize=11, label='QA-QUBO'),
-        plt.Line2D([0], [0], marker='^', color='w', markerfacecolor='gray',
-                   markeredgecolor='black', markersize=11, alpha=0.55, label='Local-Greedy'),
+    fig, ax = plt.subplots(figsize=(15, 6.5))
+    width = 0.32
+    GREEN, RED = '#27ae60', '#c0392b'
+    qa_colors = [GREEN if v >= 0 else RED for v in pct_qa_vals]
+    gr_colors = [GREEN if v >= 0 else RED for v in pct_gr_vals]
+
+    ax.bar(x - width / 2, pct_qa_vals, width, color=qa_colors, alpha=0.95,
+           edgecolor='black', lw=0.6, label='QA-QUBO')
+    ax.bar(x + width / 2, pct_gr_vals, width, color=qa_colors and gr_colors, alpha=0.55,
+           edgecolor='black', lw=0.6, hatch='//', label='Local-Greedy')
+    ax.axhline(0, color='black', lw=1)
+
+    legend_handles = [
+        mpatches.Patch(facecolor='gray', edgecolor='black', alpha=0.95, label='QA-QUBO'),
+        mpatches.Patch(facecolor='gray', edgecolor='black', alpha=0.55, hatch='//', label='Local-Greedy'),
+        mpatches.Patch(facecolor=GREEN, edgecolor='black', label='Net improvement'),
+        mpatches.Patch(facecolor=RED, edgecolor='black', label='Net increase (growth outpaced the controller)'),
     ]
-    leg1 = ax.legend(handles=marker_legend, loc='lower right', fontsize=9.5,
-                      title='Controller', framealpha=0.95)
-    ax.add_artist(leg1)
-    ax.legend(handles=legend_handles, loc='center left', bbox_to_anchor=(1.01, 0.5),
-              fontsize=8, title='City', framealpha=0.95)
+    ax.legend(handles=legend_handles, fontsize=8.5, loc='lower left')
 
-    ax.set_xlabel('Real 2023 PM2.5 baseline (μg/m³) -- proxy for how congested/polluted the city already is')
-    ax.set_ylabel('% CO2 change, 2025 Fixed-Time → 2030 full deployment\n(demand growth included; positive = improvement)')
+    ax.set_xticks(x)
+    ax.set_xticklabels(short, fontsize=8)
+    ax.set_ylabel('% CO2 change, 2025 Fixed-Time → 2030\n(demand growth included; positive = improvement)')
     ax.set_title(
-        f'Does controller benefit scale with baseline pollution? ({len(ALL_CITIES)} cities)\n'
+        f'Does controller benefit scale with baseline pollution? ({len(ordered)} cities, same order as above)\n'
         '(Includes 2%/yr demand growth 2025-2030 -- a city can show a net INCREASE\n'
         'if traffic growth outpaces the controller\'s efficiency gain)', fontsize=10.5)
-    ax.grid(True, ls='--', alpha=0.4)
+    ax.grid(True, axis='y', ls='--', alpha=0.4)
     fig.tight_layout()
     fig.savefig(os.path.join(FIG_DIR, 'fig13_pollution_vs_benefit.png'), bbox_inches='tight')
     plt.close(fig)

@@ -408,7 +408,7 @@ def main():
     ax.grid(True, linestyle="--", alpha=0.4)
     ax.legend(frameon=True, loc="upper left")
     fig.tight_layout()
-    fig.savefig(os.path.join(FIG_DIR, "fig1_queue_timeseries.png"), bbox_inches="tight")
+    fig.savefig(os.path.join(FIG_DIR, "fig01_queue_timeseries.png"), bbox_inches="tight")
     plt.close(fig)
 
     # Figure 2: Bar Chart Comparison of Key Environmental & Delay Metrics
@@ -443,7 +443,7 @@ def main():
             )
 
     fig.tight_layout()
-    fig.savefig(os.path.join(FIG_DIR, "fig2_emissions_comparison.png"))
+    fig.savefig(os.path.join(FIG_DIR, "fig02_emissions_comparison.png"))
     plt.close(fig)
 
     # Figure 3: CO2 Emissions & Idling Delay vs. Traffic Congestion Demand Multiplier
@@ -472,7 +472,7 @@ def main():
     ax2.legend(fontsize=8.5)
 
     fig.tight_layout()
-    fig.savefig(os.path.join(FIG_DIR, "fig3_congestion_scaling.png"))
+    fig.savefig(os.path.join(FIG_DIR, "fig03_congestion_scaling.png"))
     plt.close(fig)
 
     output_report = {

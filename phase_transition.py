@@ -16,9 +16,9 @@ quantum annealing vs. classical traffic controllers. The QUBO controller should
 push λ* to a higher value, meaning it can sustain free flow under heavier demand.
 
 Output:
-  figures/fig5_phase_diagram.png   — 2D heatmap: improvement vs (grid size, demand)
-  figures/fig6_bifurcation.png     — bifurcation diagram showing critical λ* per controller
-  figures/fig7_greenwave_coherence.png — green-wave spatial coherence length vs demand
+  figures/fig05_phase_diagram.png   — 2D heatmap: improvement vs (grid size, demand)
+  figures/fig06_bifurcation.png     — bifurcation diagram showing critical λ* per controller
+  figures/fig07_greenwave_coherence.png — green-wave spatial coherence length vs demand
 """
 
 import os, sys
@@ -243,9 +243,9 @@ ax2.set_xlim(DEMANDS_A[0], DEMANDS_A[-1])
 ax2.set_ylim(0, 100)
 
 fig.tight_layout()
-fig.savefig(os.path.join(FIG_DIR, "fig6_bifurcation.png"), bbox_inches="tight")
+fig.savefig(os.path.join(FIG_DIR, "fig06_bifurcation.png"), bbox_inches="tight")
 plt.close(fig)
-print("  Saved fig6_bifurcation.png")
+print("  Saved fig06_bifurcation.png")
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -296,9 +296,12 @@ for ax, data, title, cmap in zip(
      "QA-QUBO vs Local-Greedy\n(% Reduction in Residual Queue → CO₂ Proxy)"],
     ["RdYlGn", "PuOr"]
 ):
+    vmin, vmax = data.min(), max(data.max(), 1.0)
     im = ax.imshow(data, aspect='auto', cmap=cmap,
-                   vmin=data.min(), vmax=max(data.max(), 1.0),
+                   vmin=vmin, vmax=vmax,
                    origin='lower')
+    norm = plt.Normalize(vmin=vmin, vmax=vmax)
+    cmap_obj = plt.get_cmap(cmap)
     cb = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
     cb.set_label("% Queue Reduction\n(positive = QUBO is better)", fontsize=9)
     ax.set_xticks(range(len(DEMANDS_B)))
@@ -309,13 +312,18 @@ for ax, data, title, cmap in zip(
     ax.set_ylabel("Urban Grid Size (intersections)", fontsize=10)
     ax.set_title(title, fontsize=11)
 
-    # annotate cells
+    # annotate cells -- pick black/white text from the ACTUAL rendered cell
+    # color's perceived luminance, not a guessed numeric threshold (a fixed
+    # threshold tuned for one colormap/data-range silently breaks on another,
+    # which is exactly what made several cells here unreadable before)
     for li in range(len(GRID_SIZES)):
         for di in range(len(DEMANDS_B)):
             val = data[li, di]
+            r, g, b, _ = cmap_obj(norm(val))
+            luminance = 0.299 * r + 0.587 * g + 0.114 * b
             ax.text(di, li, f"{val:.1f}%",
                     ha='center', va='center', fontsize=7.5,
-                    color='black' if 20 < val < 80 else 'white',
+                    color='black' if luminance > 0.55 else 'white',
                     fontweight='bold')
 
     # Mark the critical boundary: where QUBO improvement crosses 10%
@@ -338,9 +346,9 @@ fig.suptitle(
     fontsize=11, y=1.02
 )
 fig.tight_layout()
-fig.savefig(os.path.join(FIG_DIR, "fig5_phase_diagram.png"), bbox_inches="tight")
+fig.savefig(os.path.join(FIG_DIR, "fig05_phase_diagram.png"), bbox_inches="tight")
 plt.close(fig)
-print("  Saved fig5_phase_diagram.png")
+print("  Saved fig05_phase_diagram.png")
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -486,9 +494,9 @@ for ctrl in CONTROLLERS:
                 color=COLORS[ctrl], fontsize=9, fontweight='bold')
 
 fig.tight_layout()
-fig.savefig(os.path.join(FIG_DIR, "fig7_greenwave_coherence.png"), bbox_inches="tight")
+fig.savefig(os.path.join(FIG_DIR, "fig07_greenwave_coherence.png"), bbox_inches="tight")
 plt.close(fig)
-print("  Saved fig7_greenwave_coherence.png")
+print("  Saved fig07_greenwave_coherence.png")
 
 print("\n" + "="*60)
 print("ALL EXPERIMENTS COMPLETE.")

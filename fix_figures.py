@@ -66,13 +66,21 @@ for ax_i, (metric, mlabel) in enumerate(zip(metrics, m_labels)):
     b3 = ax.bar(x + width,  qubo_2030,  width, label='SQA-QUBO*',
                 color=colors, alpha=0.95, edgecolor='black', lw=0.8)
 
+    ax.set_ylim(0, max(max(fixed_2030), max(local_2030), max(qubo_2030)) * 1.20)
+    bracket_h = ax.get_ylim()[1] * 0.025
     for i, (fv, qv) in enumerate(zip(fixed_2030, qubo_2030)):
         pct = 100 * (fv - qv) / max(fv, 1e-9)
-        color = '#27ae60' if pct >= 0 else '#c0392b'
-        sign  = '-' if pct >= 0 else '+'
-        ax.text(x[i] + width, max(fv, local_2030[i], qv) * 1.025,
-                f'{sign}{abs(pct):.0f}%', ha='center', va='bottom',
-                fontsize=8, color=color, fontweight='bold')
+        sign = '-' if pct >= 0 else '+'
+        top = max(fv, local_2030[i], qv) + bracket_h * 1.8
+        # Bracket spans exactly the two bars being compared (Fixed-Time <-> SQA-QUBO),
+        # not floating disconnected from either -- and the label sits centered on the
+        # bracket (over the middle Local-Greedy bar), not off to one side.
+        x_left, x_right = x[i] - width, x[i] + width
+        ax.plot([x_left, x_left, x_right, x_right],
+                [top - bracket_h, top, top, top - bracket_h],
+                color='black', lw=1.0)
+        ax.text(x[i], top + bracket_h * 0.6, f'{sign}{abs(pct):.0f}%',
+                ha='center', va='bottom', fontsize=8.5, color='black', fontweight='bold')
 
     ax.set_xticks(x)
     ax.set_xticklabels(short_names, fontsize=8.5)
@@ -133,8 +141,8 @@ for ax_i, (metric, mlabel) in enumerate(metric_pairs):
     ax.axvspan(2026.5, 2030.5, alpha=0.07, color='green')
     ax.axvline(2026.5, color='green', lw=1.2, ls=':', alpha=0.85)
     ax.text(2028.5, ax.get_ylim()[1] * 0.90, 'SQA-QUBO\ndeployment begins',
-            fontsize=7.5, color='darkgreen', va='top', ha='center',
-            bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='darkgreen', alpha=0.85))
+            fontsize=7.5, color='black', va='top', ha='center',
+            bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='black', alpha=0.85))
 
     ax.set_xlabel('Year')
     ax.set_ylabel('% of 2025 Fixed-Time Baseline')
