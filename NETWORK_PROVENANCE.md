@@ -1,45 +1,57 @@
 # Which cities used real road networks vs. synthetic fallback
 
-Overpass (the OpenStreetMap query service osmnx uses) had a sustained outage
-during this run -- every single retry attempt (12+ across two different
-mirrors: overpass-api.de and overpass.kumi.systems) failed at an identical
-180-second connect timeout. That's an infrastructure problem on their end (or
-the network path to it), not per-city rate-limiting -- confirmed because it
-failed identically regardless of which city was requested. Cities that had
-already been downloaded and cached in an earlier session before the outage
-still have real data; everything requested during the outage fell back to a
-synthetic 5x5 grid (25 nodes), exactly as the original task spec allowed.
+**Update: as of the latest run, all 14 cities have real OpenStreetMap data.**
+The Overpass outage documented below (every city that fell back to a
+synthetic grid) has resolved -- Overpass recovered mid-session, and a
+re-run picked up real data for every remaining city. The synthetic-fallback
+mechanism itself is still there and still used automatically if Overpass
+is ever unreachable again; nothing here was removed, it's just not
+currently in use.
 
-| City | Network source | Nodes | Notes |
-|---|---|---:|---|
-| Fremont, CA | **real OSM** | 70 | cached before outage |
-| Delhi, India | **real OSM** | 42 | cached before outage |
-| Los Angeles, CA | **real OSM** | 44 | cached before outage |
-| Oslo, Norway | **real OSM** | 70 | cached before outage |
-| Mexico City, Mexico | **real OSM** | 65 | downloaded successfully before outage began |
-| Zurich, Switzerland | **real OSM** | 70 | downloaded successfully before outage began |
-| Singapore | **real OSM** | 53 | fixed -- old center point (1.3521, 103.8198) had no roads in the search polygon; moved to Raffles Place (1.2838, 103.8511), a dense real intersection cluster |
-| Beijing, China | synthetic | 25 | Overpass outage |
-| Jakarta, Indonesia | synthetic | 25 | Overpass outage |
-| London, UK | synthetic | 25 | Overpass outage |
-| Cairo, Egypt | synthetic | 25 | Overpass outage |
-| Tokyo, Japan | synthetic | 25 | Overpass outage |
-| Sao Paulo, Brazil | synthetic | 25 | Overpass outage |
-| Sydney, Australia | synthetic | 25 | Overpass outage |
+## Highway-grade road filtering (a real correctness fix, not just this doc)
 
-**7 of 14 cities are on real road networks; 7 are on the synthetic fallback** (Singapore's center point has since been fixed and re-downloaded successfully -- see row above).
-This is reported here rather than left implicit because every figure and
-number derived from a synthetic-grid city is a statement about "a generic
-5x5 grid with this city's real pollution stats and demand assumption
-attached," not "this city's actual streets" -- an important distinction if
-any of this goes into the paper's methodology section.
+Before this fix, `osm_to_qubo_structure()` ranked and selected intersections
+by degree on the *raw* OSM graph, which includes motorway/trunk-class roads.
+Those don't have ordinary 2-phase cross-traffic signals (they're grade-
+separated or ramp/merge-controlled), so modeling them as regular
+signal-controlled intersections wasn't physically realistic. Checked and
+fixed for every city -- the number excluded varied a lot:
 
-## To get real data for the fallback cities later
+| City | Freeway-grade edges excluded |
+|---|---:|
+| Oslo, Norway | 67 (36% of its network) |
+| Cairo, Egypt | 38 |
+| Singapore | 13 |
+| Sao Paulo, Brazil | 11 |
+| Beijing, China | 6 |
+| Sydney, Australia | 2 |
+| Los Angeles, CA | 1 |
+| Fremont, Delhi, Mexico City, Jakarta, London, Zurich, Tokyo | 0 |
 
-Nothing needs to change in the code -- `download_osm()` in `real_city_sim.py`
-already caches successful downloads and only re-attempts cities that don't
-have a cache file yet. Just re-running `world_city_sim.py` once Overpass is
-reachable again will pick up real data for whichever of the 8 fallback
-cities succeed, without re-downloading or re-simulating the other 6.
-Singapore's failure needs an actual fix (a different center point/radius),
-independent of Overpass being up or down.
+Oslo's and Singapore's actual simulation results changed as a result (Oslo's
+same-year CO2 reduction: 33.4% -> 32.8%; Singapore: 22.9% -> 21.0% -- same
+direction, not a dramatic swing, but a real change, not noise).
+
+## Current network size per city (after the highway filter, real OSM for all)
+
+| City | Intersections simulated | Notes |
+|---|---:|---|
+| Fremont, CA | 70 | raw graph at 500m radius is only 97 nodes total -- genuinely a low-density suburban grid, not a bug |
+| Delhi, India | 42 | raw graph unexpectedly small (44 nodes) -- likely thinner OSM mapping detail in that specific area, not lower real-world density |
+| Los Angeles, CA | 44 | |
+| Singapore | 43 | after excluding 13 freeway edges |
+| Oslo, Norway | 70 | after excluding 67 freeway edges (raw graph is 138 nodes, one of the densest raw samples) |
+| Mexico City, Mexico | 65 | |
+| Beijing, China | 30 | |
+| Jakarta, Indonesia | 47 | |
+| London, UK | 70 | |
+| Zurich, Switzerland | 70 | raw graph is 136 nodes, very dense |
+| Cairo, Egypt | 70 | after excluding 38 freeway edges |
+| Tokyo, Japan | 70 | |
+| Sao Paulo, Brazil | 70 | after excluding 11 freeway edges |
+| Sydney, Australia | 65 | after excluding 2 freeway edges |
+
+70 is the current `max_nodes` cap in `osm_to_qubo_structure()` -- most cities
+hit that cap, meaning the real intersection count within their 500m radius is
+at or above 70; only Fremont, Delhi, LA, Singapore, Beijing, Jakarta, and
+Sydney have fewer real intersections than the cap allows.
