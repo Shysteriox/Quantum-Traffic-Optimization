@@ -163,10 +163,27 @@ def download_osm(city_name, center, radius):
         return None
 
 
+# Road classes excluded from the signal-controlled network: these are
+# freeway-grade roads (grade-separated or limited-access, metered/merge-
+# controlled rather than cross-traffic signal-controlled) and modeling them
+# as an ordinary 2-phase NS/EW intersection is not physically realistic.
+# Found to matter in practice: Oslo's cached network was 36% trunk/trunk_link
+# edges, Singapore's 17%, before this filter existed.
+NON_SIGNAL_HIGHWAY_CLASSES = {'motorway', 'motorway_link', 'trunk', 'trunk_link'}
+
+
+def _highway_tag(data):
+    h = data.get('highway', '')
+    return h[0] if isinstance(h, list) else h
+
+
 def osm_to_qubo_structure(G, city_name, max_nodes=70):
     """
     Convert OSM graph to QUBO adjacency (edges, neighbors).
     Classifies each road link as NS or EW by its compass bearing.
+    Excludes freeway-grade edges (see NON_SIGNAL_HIGHWAY_CLASSES) before
+    ranking intersections by degree, so a freeway interchange doesn't get
+    picked over a real signalized surface intersection.
     """
     if G is None:
         L = 5
@@ -175,10 +192,20 @@ def osm_to_qubo_structure(G, city_name, max_nodes=70):
         print(f"    {city_name}: synthetic 5x5 grid ({N} nodes, {len(edges)} links)")
         return N, edges, neighbors
 
-    # Keep highest-degree nodes (busiest intersections)
-    nodes = [n for n in G.nodes() if G.degree(n) >= 2]
+    G_signal = G.edge_subgraph(
+        [(u, v, k) for u, v, k, data in G.edges(keys=True, data=True)
+         if _highway_tag(data) not in NON_SIGNAL_HIGHWAY_CLASSES]
+        if G.is_multigraph() else
+        [(u, v) for u, v, data in G.edges(data=True)
+         if _highway_tag(data) not in NON_SIGNAL_HIGHWAY_CLASSES]
+    ).copy()
+    n_excluded = G.number_of_edges() - G_signal.number_of_edges()
+
+    # Keep highest-degree nodes (busiest intersections), ranked on the
+    # freeway-filtered graph
+    nodes = [n for n in G_signal.nodes() if G_signal.degree(n) >= 2]
     if len(nodes) > max_nodes:
-        by_deg = sorted(nodes, key=lambda n: G.degree(n), reverse=True)
+        by_deg = sorted(nodes, key=lambda n: G_signal.degree(n), reverse=True)
         nodes = by_deg[:max_nodes]
     if len(nodes) < 6:
         L = 4
@@ -192,7 +219,7 @@ def osm_to_qubo_structure(G, city_name, max_nodes=70):
     neighbors = {i: [] for i in range(N)}
     seen = set()
 
-    for u, v, data in G.edges(data=True):
+    for u, v, data in G_signal.edges(data=True):
         if u not in idx or v not in idx:
             continue
         i, j = idx[u], idx[v]
@@ -211,7 +238,8 @@ def osm_to_qubo_structure(G, city_name, max_nodes=70):
         neighbors[i].append((j, axis))
         neighbors[j].append((i, axis))
 
-    print(f"    {city_name}: {N} intersections, {len(edges)} road links (real OSM)")
+    tag = f" (excluded {n_excluded} freeway-grade edges)" if n_excluded else ""
+    print(f"    {city_name}: {N} intersections, {len(edges)} road links (real OSM){tag}")
     return N, edges, neighbors
 
 
