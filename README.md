@@ -55,6 +55,8 @@ city_tour_videos.py      Per-city animation: one MP4 per city, real curved OSM r
                           ffmpeg dependency otherwise. `python city_tour_videos.py` renders all
                           14; `python city_tour_videos.py "Delhi"` renders one (substring
                           match). Output goes to figures/city_tours/, not tracked in git.
+                          All 14 rendered videos are attached to the
+                          [city-tours-v1 release](https://github.com/Shysteriox/Quantum-Traffic-Optimization/releases/tag/city-tours-v1).
 fix_figures.py           Regenerates the same-year-corrected comparison figures
 plot_grid_qubo_diagram.py  QUBO structure diagram for a synthetic grid
 
