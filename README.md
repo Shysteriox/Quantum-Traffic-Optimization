@@ -32,16 +32,37 @@ QUBO-vs-Fixed-Time, which hides this.
 ## Structure
 
 ```
-real_city_sim.py         5-city core simulation engine + Fixed-Time/Greedy/QUBO controllers
+real_city_sim.py         5-city core simulation engine + Fixed-Time/Greedy/QUBO controllers +
+                          osm_to_qubo_structure() (real-OSM-graph -> QUBO adjacency, excludes
+                          freeway-grade roads -- see NETWORK_PROVENANCE.md)
 world_city_sim.py        Extends to 14 cities across every continent (imports real_city_sim)
-network_scale_test.py    Does QUBO's edge over Greedy grow with network size (more intersections)?
+network_scale_test.py    Built but NOT YET RUN -- was going to test whether QUBO's edge over
+                          Greedy grows with network size using real OSM data at increasing radii;
+                          the question ended up answered instead using existing synthetic-grid
+                          data (fig5_phase_diagram.png). Re-run this if you want the same question
+                          answered with real road networks specifically.
 simulate_qubo_traffic.py QUBO matrix construction + simulated-annealing solver (shared engine)
 phase_transition.py      Gridlock phase-transition / bifurcation experiments (synthetic grids)
-animate_traffic.py       Mini-Motorways-style animation renderer
+animate_traffic.py       Original single-synthetic-grid 3-panel animation (superseded by
+                          city_tour_videos.py below, kept for reference)
+world_tour_animation.py  Superseded by city_tour_videos.py -- one combined GIF cycling through
+                          all 14 cities turned out to be a bad format (56MB, no seek controls,
+                          abstract node-graph layout, rapidly-flipping colors read as
+                          "flashing lights"). Kept for reference, not the recommended path.
+city_tour_videos.py      THE recommended per-city animation: one MP4 per city, real curved OSM
+                          road geometry, Google-Maps-style green/yellow/red congestion coloring,
+                          on-screen legend, continuous 2025-2030 simulation per city (both panels
+                          identical until 2027, diverging as QA-QUBO adoption ramps up). Needs
+                          imageio-ffmpeg (`pip install imageio-ffmpeg`) since this project has no
+                          system ffmpeg dependency otherwise. Run `python city_tour_videos.py` for
+                          all 14, or `python city_tour_videos.py "Delhi"` for just one (substring
+                          match). Outputs to figures/city_tours/, not tracked in git (*.mp4 is
+                          gitignored -- ~3-5MB per city, re-run to regenerate).
 fix_figures.py           Regenerates same-year-corrected comparison figures
 plot_grid_qubo_diagram.py  QUBO structure diagram for a synthetic grid
 
-figures/                 All generated PNGs/GIFs/MP4s
+figures/                 All generated PNGs (city_tours/ subfolder holds the per-city MP4s,
+                          not tracked in git)
 osm_cache/               Cached real road networks (tracked in git -- small, avoids re-hitting
                           Overpass, which has been unreliable during development)
 city_results.json, world_results.json, network_scale_results.json, simulation_results.json
@@ -60,8 +81,11 @@ python real_city_sim.py       # original 5-city run (writes uncorrected fig08/fi
 python fix_figures.py         # MUST run after real_city_sim.py -- overwrites fig08/fig09 with the
                                # same-year-comparison corrected versions (see "Important framing note")
 python world_city_sim.py      # 14-city world run (imports real_city_sim, no need to run it first)
-python network_scale_test.py  # network-size scaling test
+python network_scale_test.py  # network-size scaling test (see note above -- not yet run)
 python phase_transition.py    # gridlock phase-transition experiments (synthetic grids)
+
+pip install imageio-ffmpeg    # needed once, for real MP4 export (no system ffmpeg on this project)
+python city_tour_videos.py    # all 14 per-city MP4s -> figures/city_tours/
 ```
 
 Needs internet access for the first run per city (OpenStreetMap via the
