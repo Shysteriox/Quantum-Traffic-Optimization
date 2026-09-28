@@ -625,13 +625,15 @@ if __name__ == '__main__':
 
     bars = ax.bar(fig11_short, co2_saved, color=fig11_colors,
                   edgecolor='black', lw=0.9, alpha=0.88)
-    ax.set_ylim(0, max(co2_saved) * 1.22)
-    label_pad = ax.get_ylim()[1] * 0.02
+    ax.set_ylim(0, max(co2_saved) * 1.10)
+    # Labels sit inside each bar, near its own top, instead of floating above
+    # the bar group -- floating labels on a staircase-sorted chart spill
+    # sideways into the neighboring (almost-as-tall) bar's label.
     for bar, pct in zip(bars, pct_saved):
         sign = '+' if pct >= 0 else '-'
         ax.text(bar.get_x() + bar.get_width() / 2,
-                bar.get_height() + label_pad,
-                f'{sign}{abs(pct):.1f}% reduction', ha='center', va='bottom',
+                bar.get_height() * 0.96,
+                f'{sign}{abs(pct):.1f}%\nreduction', ha='center', va='top',
                 fontsize=8.5, fontweight='bold', color='black')
 
     ax.set_ylabel('Annual CO2 Saved (metric tonnes, area-scaled)')

@@ -59,12 +59,25 @@ for ax_i, (metric, mlabel) in enumerate(zip(metrics, m_labels)):
     local_2030 = [all_results[c]['2030']['Local-Greedy'][metric]['mean'] for c in city_names]
     qubo_2030  = [all_results[c]['2030']['QA-QUBO'][metric]['mean']   for c in city_names]
 
-    b1 = ax.bar(x - width, fixed_2030, width, label='Fixed-Time',
-                color=colors, alpha=0.40, edgecolor='black', lw=0.8)
-    b2 = ax.bar(x,          local_2030, width, label='Local-Greedy',
-                color=colors, alpha=0.68, edgecolor='black', lw=0.8)
-    b3 = ax.bar(x + width,  qubo_2030,  width, label='SQA-QUBO*',
-                color=colors, alpha=0.95, edgecolor='black', lw=0.8)
+    # All three bars per city use that city's own color; the controller is
+    # distinguished by hatch pattern rather than subtle alpha levels, same
+    # convention as fig12.
+    b1 = ax.bar(x - width, fixed_2030, width,
+                color=colors, edgecolor='black', lw=0.8)
+    b2 = ax.bar(x,          local_2030, width,
+                color=colors, edgecolor='black', lw=0.8, hatch='//')
+    b3 = ax.bar(x + width,  qubo_2030,  width,
+                color=colors, edgecolor='black', lw=0.8, hatch='..')
+
+    # Bar color = city (see x-axis labels); passing a per-city color list into
+    # ax.bar() with label= made the legend grab one arbitrary city's color
+    # (Fremont's green) for every entry. Neutral gray proxies with the same
+    # hatch patterns as the real bars instead.
+    legend_handles = [
+        mpatches.Patch(facecolor='lightgray', edgecolor='black', label='Fixed-Time'),
+        mpatches.Patch(facecolor='lightgray', edgecolor='black', hatch='//', label='Local-Greedy'),
+        mpatches.Patch(facecolor='lightgray', edgecolor='black', hatch='..', label='SQA-QUBO*'),
+    ]
 
     ax.set_ylim(0, max(max(fixed_2030), max(local_2030), max(qubo_2030)) * 1.20)
     bracket_h = ax.get_ylim()[1] * 0.025
@@ -86,7 +99,7 @@ for ax_i, (metric, mlabel) in enumerate(zip(metrics, m_labels)):
     ax.set_xticklabels(short_names, fontsize=8.5)
     ax.set_ylabel(mlabel)
     ax.set_title(f'{mlabel}\n(All controllers at 2030 demand -- same year)', fontsize=10)
-    ax.legend(fontsize=8)
+    ax.legend(handles=legend_handles, fontsize=8)
     ax.grid(True, axis='y', ls='--', alpha=0.4)
 
 # Footnote clarifying SQA vs real quantum hardware
