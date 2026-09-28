@@ -240,28 +240,35 @@ def main():
     gr_vals = [all_results[c][2030]['Local-Greedy']['co2_kg']['mean'] for c in ordered]
     qa_vals = [all_results[c][2030]['QA-QUBO']['co2_kg']['mean'] for c in ordered]
 
-    ax.bar(x - width, ft_vals, width, color='#7f8c8d', edgecolor='black', lw=0.6)
-    ax.bar(x,          gr_vals, width, color=colors, alpha=0.55, edgecolor='black', lw=0.6)
-    ax.bar(x + width,  qa_vals, width, color=colors, alpha=0.95, edgecolor='black', lw=0.6)
+    # All three bars per city use that city's own color (not gray, not alpha
+    # levels) -- the controller is distinguished by hatch pattern instead, so
+    # it reads correctly without needing to compare subtle transparency levels.
+    ax.bar(x - width, ft_vals, width, color=colors, edgecolor='black', lw=0.6)
+    ax.bar(x,          gr_vals, width, color=colors, edgecolor='black', lw=0.6, hatch='//')
+    ax.bar(x + width,  qa_vals, width, color=colors, edgecolor='black', lw=0.6, hatch='..')
 
     # Bar color = city (see x-axis labels); passing a per-city color list into ax.bar()
-    # with label= made the legend grab one arbitrary city's color for "Local-Greedy"/
-    # "QA-QUBO". Neutral gray proxies at the same alphas as the real bars instead.
+    # with label= made the legend grab one arbitrary city's color for every entry.
+    # Neutral gray proxies with the same hatch patterns as the real bars instead.
     legend_handles = [
-        mpatches.Patch(facecolor='#7f8c8d', edgecolor='black', label='Fixed-Time'),
-        mpatches.Patch(facecolor='gray', edgecolor='black', alpha=0.55, label='Local-Greedy'),
-        mpatches.Patch(facecolor='gray', edgecolor='black', alpha=0.95, label='QA-QUBO'),
+        mpatches.Patch(facecolor='lightgray', edgecolor='black', label='Fixed-Time'),
+        mpatches.Patch(facecolor='lightgray', edgecolor='black', hatch='//', label='Local-Greedy'),
+        mpatches.Patch(facecolor='lightgray', edgecolor='black', hatch='..', label='QA-QUBO'),
     ]
 
-    y_row = -max(ft_vals) * 0.06
-    ax.text(-0.9, y_row, 'PM2.5 (2023,\nµg/m³):', ha='right', va='top', fontsize=7.5,
-            color='black', linespacing=1.3)
+    # Axes-fraction y (not data-coordinate) so this row's clearance from the
+    # two-line "City\nCountry" tick labels doesn't depend on the data range --
+    # a data-coordinate offset left them colliding at some y-axis scales.
+    y_row = -0.145
+    ax.text(-0.045, y_row, 'PM2.5 (2023,\nµg/m³):', ha='right', va='top', fontsize=7.5,
+            color='black', linespacing=1.3, transform=ax.transAxes)
     for i, c in enumerate(ordered):
         pm = ALL_CITIES[c]['pm25_2023']
         conf = ALL_CITIES[c]['source_confidence']
         mark = '' if conf == 'verified' else '*'
         ax.text(x[i], y_row, f'{pm:.1f}{mark}', ha='center', va='top',
-                fontsize=8, color='black', fontweight='bold')
+                fontsize=8, color='black', fontweight='bold',
+                transform=ax.get_xaxis_transform())
 
     ax.set_xticks(x)
     ax.set_xticklabels(short, fontsize=8)
@@ -284,15 +291,18 @@ def main():
     # legend AND a 2-shape controller legend cross-referenced simultaneously
     # just to read one point, which was genuinely too much to decode.
     # =========================================================================
-    pct_qa_vals, pct_gr_vals = [], []
-    for c in ordered:
+    pct_qa_vals, pct_gr_vals, pct_qa_sameyear = [], [], []
+    for i, c in enumerate(ordered):
         ft25 = all_results[c][2025]['Fixed-Time']['co2_kg']['mean']
         gr30 = all_results[c][2030]['Local-Greedy']['co2_kg']['mean']
         qa30 = all_results[c][2030]['QA-QUBO']['co2_kg']['mean']
         pct_gr_vals.append(100 * (ft25 - gr30) / ft25)
         pct_qa_vals.append(100 * (ft25 - qa30) / ft25)
+        # same-year effect (fig12's comparison): controller vs Fixed-Time at
+        # the SAME 2030 demand -- isolates the controller from demand growth
+        pct_qa_sameyear.append(100 * (ft_vals[i] - qa_vals[i]) / ft_vals[i])
 
-    fig, ax = plt.subplots(figsize=(15, 6.5))
+    fig, ax = plt.subplots(figsize=(15, 7.2))
     width = 0.32
     GREEN, RED = '#27ae60', '#c0392b'
     qa_colors = [GREEN if v >= 0 else RED for v in pct_qa_vals]
@@ -300,7 +310,7 @@ def main():
 
     ax.bar(x - width / 2, pct_qa_vals, width, color=qa_colors, alpha=0.95,
            edgecolor='black', lw=0.6, label='QA-QUBO')
-    ax.bar(x + width / 2, pct_gr_vals, width, color=qa_colors and gr_colors, alpha=0.55,
+    ax.bar(x + width / 2, pct_gr_vals, width, color=gr_colors, alpha=0.55,
            edgecolor='black', lw=0.6, hatch='//', label='Local-Greedy')
     ax.axhline(0, color='black', lw=1)
 
@@ -311,6 +321,18 @@ def main():
         mpatches.Patch(facecolor=RED, edgecolor='black', label='Net increase (growth outpaced the controller)'),
     ]
     ax.legend(handles=legend_handles, fontsize=8.5, loc='lower left')
+
+    n_sameyear_positive = sum(1 for v in pct_qa_sameyear if v >= 0)
+    n_net_positive = sum(1 for v in pct_qa_vals if v >= 0)
+    ax.text(0.99, 0.03,
+            f'Two different questions:\n'
+            f'• Does QA-QUBO beat Fixed-Time at the SAME demand level? '
+            f'Yes, in {n_sameyear_positive}/{len(ordered)} cities (see fig12).\n'
+            f'• Is total 2030 CO2 lower than TODAY, after 5 years of demand growth too? '
+            f'Only in {n_net_positive}/{len(ordered)} cities (this chart).\n'
+            f'The bars below answer the second, harder question -- a red bar does not mean the controller failed.',
+            transform=ax.transAxes, ha='right', va='bottom', fontsize=8,
+            bbox=dict(boxstyle='round,pad=0.4', facecolor='white', edgecolor='black', alpha=0.95))
 
     ax.set_xticks(x)
     ax.set_xticklabels(short, fontsize=8)
