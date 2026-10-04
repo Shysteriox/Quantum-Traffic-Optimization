@@ -1,5 +1,15 @@
 # Quantum Traffic Optimization
 
+> **Current results: `sim_10seeds/` (900 runs). Everything else in this repo is superseded.**
+>
+> - **Local-Greedy beat SA-QUBO in 50 of 50 paired runs** (5 networks x 10 seeds). This is a negative result for the QUBO controller.
+> - **No quantum hardware was used.** "SA-QUBO" is classical simulated annealing (dwave-neal) solving a QUBO. Nothing here shows a quantum advantage.
+> - SA-QUBO beat Fixed-Time clearly only in Fremont (28.5% less delay) and Oslo (18.5%). Delhi is inconclusive (4.4%, 6 of 10 seeds); Los Angeles is -3.8% and the synthetic 5x5 grid ("Singapore") is -8.7%.
+> - **Superseded:** the 3-trial, 14-city results, `phase_transition.py`, the city-tour videos and the JSON results at the repo root. They came from an earlier, biased toy model; claims like "QUBO wins in most cities" or a "phase transition" should not be cited. Their emission factors were also roughly 14x (CO2) and 15.7x (fuel) too small, and the CO2/NOx/fuel percentages simply equal the delay percentage. Use delay (vehicle-hours) as the metric.
+> - Paper figures: `figures_paper/` (Figure 1 and Figure 2). Reproduce with `sim_10seeds/` (see its README and METHODS.md).
+>
+> Convention: "% less delay than Fixed-Time, positive = better, mean of per-trial values". Whether SA-QUBO could overtake Greedy under other QUBO weights, demand levels, real signal data, larger or more coupled networks, or real quantum hardware is untested; those are hypotheses, not findings.
+
 A simulation project comparing three traffic-signal controllers — Fixed-Time,
 Local-Greedy, and a QUBO-based controller solved with simulated annealing
 ("QA-QUBO") — across real OpenStreetMap road networks in cities on every
@@ -18,18 +28,21 @@ have D-Wave access. That stand-in is standard practice in the published
 literature on this topic (see `REFERENCES.md`); the naming should not be
 read as implying a demonstrated quantum speedup.
 
-Two independently-built versions of this simulation (this one, and a
-separately-built comparison) reached opposite conclusions about whether
-QA-QUBO beats a simple Local-Greedy baseline — this implementation shows
-QUBO winning in most cities, the other shows Greedy winning in all of
-them. That disagreement is itself a result worth reporting: it indicates
-the "QUBO beats greedy" outcome is sensitive to implementation detail
-rather than a settled finding. Figures and summaries in this project
-report all three controllers rather than only QUBO-vs-Fixed-Time.
+Earlier versions of this project (the code at the repo root) reported QUBO
+winning in most cities. The 10-seed rerun in `sim_10seeds/` does not support
+that: Greedy won every paired run. The root-level code and results are kept
+only for history.
 
 ## Structure
 
 ```
+sim_10seeds/             CURRENT. The 10-seed run behind the paper: 5 networks x 6 years x
+                          3 controllers x 10 seeds = 900 runs. results.csv has every run;
+                          README.md, METHODS.md and RESULTS.md explain how to reproduce it.
+figures_paper/           CURRENT. Figure 1 (2030 comparison) and Figure 2 (adoption by year)
+
+Everything below is the earlier, superseded version, kept for history:
+
 real_city_sim.py         5-city core simulation engine + Fixed-Time/Greedy/QUBO controllers +
                           osm_to_qubo_structure() (real-OSM-graph -> QUBO adjacency, excludes
                           freeway-grade roads -- see NETWORK_PROVENANCE.md)
