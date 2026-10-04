@@ -86,7 +86,7 @@ city_results.json, world_results.json, network_scale_results.json, simulation_re
 DATA_SOURCES.md          Sourcing and confidence level for every real-world statistic used
 NETWORK_PROVENANCE.md    Which cities' figures use a real OSM road network vs. a synthetic
                           fallback grid, and why
-REFERENCES.md            16 independently-verified citations for the paper
+REFERENCES.md            Independently checked citations for the paper
 ```
 
 ## Running it
@@ -112,7 +112,7 @@ cities that affected on the most recent run.
 
 ## References
 
-`REFERENCES.md` lists 16 citations, each checked directly against its
+`REFERENCES.md` lists citations, each checked directly against its
 source rather than accepted on the strength of the citation string alone.
 An earlier reference list for this project included entries that did not
 match their cited sources on verification; this list replaces it.
