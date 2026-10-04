@@ -12,4 +12,4 @@
 
 These results measure controller behavior under assumed demand, not observed city traffic. The greedy controller is an essential comparator; a benefit over fixed timing alone is not a quantum benefit.
 
-Exploratory reference scatter R�: nan. This is not a validation statistic for comparable measurements.
+Exploratory reference scatter R²: nan. This is not a validation statistic for comparable measurements.
