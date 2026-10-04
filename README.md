@@ -14,7 +14,7 @@
 *Superseded description of the earlier version (see the banner above):* a
 simulation project comparing three traffic-signal controllers — Fixed-Time,
 Local-Greedy, and a QUBO-based controller solved with simulated annealing
-("QA-QUBO") — across OpenStreetMap road networks in 14 cities, 2025-2030.
+("SA-QUBO") — across OpenStreetMap road networks in 14 cities, 2025-2030.
 
 `DATA_SOURCES.md` documents the sources of the real-world statistics used by
 that earlier version (including PM2.5 and congestion index). The current
@@ -22,7 +22,7 @@ paper does not use them and makes no health or PM2.5 claims.
 
 ## Framing notes
 
-`QA-QUBO` refers to classical simulated annealing solving a QUBO
+`SA-QUBO` refers to classical simulated annealing solving a QUBO
 formulation, not real quantum-annealer hardware — this project does not
 have D-Wave access. That stand-in is standard practice in the published
 literature on this topic (see `REFERENCES.md`); the naming should not be
@@ -66,7 +66,7 @@ world_tour_animation.py  Superseded by city_tour_videos.py. A single combined GI
 city_tour_videos.py      Per-city animation: one MP4 per city, real curved OSM road geometry,
                           green/yellow/red congestion coloring, an on-screen legend, and a
                           continuous 2025-2030 simulation per city (both panels identical until
-                          2027, diverging as QA-QUBO adoption ramps up). Requires imageio-ffmpeg
+                          2027, diverging as SA-QUBO adoption ramps up). Requires imageio-ffmpeg
                           (`pip install imageio-ffmpeg`), since this project has no system
                           ffmpeg dependency otherwise. `python city_tour_videos.py` renders all
                           14; `python city_tour_videos.py "Delhi"` renders one (substring
@@ -76,9 +76,9 @@ city_tour_videos.py      Per-city animation: one MP4 per city, real curved OSM r
 fix_figures.py           Regenerates the same-year-corrected comparison figures
 plot_grid_qubo_diagram.py  QUBO structure diagram for a synthetic grid
 
-figures/                 Generated PNGs from the superseded runs (city_tours/ subfolder holds
-                          the per-city MP4s, not tracked in git). The health-impact and
-                          pollution figures were removed: the paper makes no health claims.
+figures/                 The superseded PNGs were deleted from git. The scripts below recreate
+                          them here when run (city_tours/ holds the per-city MP4s, not tracked
+                          in git). The paper's figures are in figures_paper/.
 osm_cache/               Cached real road networks (tracked in git; avoids re-hitting
                           Overpass, which has been unreliable during development)
 city_results.json, world_results.json, network_scale_results.json, simulation_results.json
