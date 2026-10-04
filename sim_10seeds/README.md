@@ -28,6 +28,6 @@ The included cached networks make subsequent runs independent of OSM downloads. 
 - `METHODS.md`: assumptions, corrected equations and limitations.
 - `check_model.py`: objective algebra, vehicle conservation, matched inputs, and no-adoption checks.
 - `osm_cache/`: downloaded networks, simplified simulation network and provenance.
-- `figures/`: four 300-DPI figures, MP4 and animation preview.
+- The paper's two figures are in `../figures_paper/`; `../make_figures.py` regenerates them from `results.csv`.
 
 Read RESULTS.md and METHODS.md before using the graphics in a paper. The figures report sampled-network outcomes; none are whole-city estimates. Positive reduction means improvement; negative reduction means deterioration. No parameters were fitted to force QUBO to outperform the baselines.
